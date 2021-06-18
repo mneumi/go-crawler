@@ -3,6 +3,7 @@ package engine
 import (
 	"log"
 
+	"github.com/mneumi/crawler/model"
 	"github.com/mneumi/crawler/types"
 )
 
@@ -32,16 +33,30 @@ func (c *ConcurrentEngine) Run(seeds ...types.Request) {
 	}
 
 	for _, r := range seeds {
+		if isDuplicate(r.Url) { // seeds 也进行去重的原因是把seed也放入参考表中
+			log.Printf("Duplicate request: %s", r.Url)
+			continue
+		}
 		c.Scheduler.Submit(r)
 	}
 
+	profileCount := 0
 	for {
 		result := <-out
 		for _, item := range result.Items {
-			log.Printf("got item: %v", item)
+			if _, ok := item.(model.Profile); ok {
+				log.Printf("got item #%d: %v", profileCount, item)
+				profileCount++
+			}
 		}
 
+		// 去重
 		for _, request := range result.Requests {
+			if isDuplicate(request.Url) {
+				// log.Printf("Duplicate request: %s", request.Url)
+				continue
+			}
+
 			c.Scheduler.Submit(request)
 		}
 	}
@@ -61,4 +76,15 @@ func createWorker(in chan types.Request, out chan types.ParseResult, ready Ready
 			out <- result
 		}
 	}()
+}
+
+var visitedUrls = make(map[string]bool)
+
+func isDuplicate(url string) bool {
+	if visitedUrls[url] {
+		return true
+	}
+
+	visitedUrls[url] = true
+	return false
 }

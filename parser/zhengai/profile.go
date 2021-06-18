@@ -21,6 +21,8 @@ var hukouRe = regexp.MustCompile(`<td><span class="label">籍贯：</span>([^<]+
 var houseRe = regexp.MustCompile(`<td><span class="label">住房条件：</span><span field="">([^<]+)</span></td>`)
 var carRe = regexp.MustCompile(`<td><span class="label">是否购车：</span><span field="">([^<]+)</span></td>`)
 
+var guessRe = regexp.MustCompile(`<a class="exp-user-name"[^>]*href="(http://localhost:8080/mock/album.zhenai.com/u/[\d]+)">([^<]+)</a>`)
+
 func ParseProfile(contents []byte, name string) types.ParseResult {
 	profile := model.Profile{
 		Name: name,
@@ -53,6 +55,18 @@ func ParseProfile(contents []byte, name string) types.ParseResult {
 
 	result := types.ParseResult{
 		Items: []interface{}{profile},
+	}
+
+	matches := guessRe.FindAllSubmatch(contents, -1)
+
+	for _, m := range matches {
+		name := string(m[2])
+		result.Requests = append(result.Requests, types.Request{
+			Url: string(m[1]),
+			ParserFunc: func(c []byte) types.ParseResult {
+				return ParseProfile(c, name)
+			},
+		})
 	}
 
 	return result

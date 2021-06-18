@@ -32,7 +32,7 @@ func (s SingleEngine) Run(seeds ...types.Request) {
 }
 
 func worker(r types.Request) (types.ParseResult, error) {
-	log.Printf("fetching %s\n", r.Url)
+	// log.Printf("fetching %s\n", r.Url)
 
 	body, err := fetcher.Fetch(r.Url)
 

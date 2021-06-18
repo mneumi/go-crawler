@@ -23,4 +23,4 @@ func (s *SimpleScheduler) Run() {
 	s.workerChan = make(chan types.Request)
 }
 
-// 每个worker共用一个channel（Simple），还是每个worker一个channel（Queue）
+// 每个worker共用一个channel（Simple），还是每个worker一个channel（Queue）(Scheduler把握)
